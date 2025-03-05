@@ -12,11 +12,12 @@ import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.nio.ByteBuffer
 
-class MyWebSocketClient(serverUri: URI, private val onImageReceived: (Bitmap?) -> Unit,private val sendImage:()->Unit) : WebSocketClient(serverUri) {
+class MyWebSocketClient(serverUri: URI, private val onImageReceived: (Bitmap?) -> Unit,private val sendImage:()->Unit,private val updateProgressUI:(Long)->Unit) : WebSocketClient(serverUri) {
 
-    data class socketMessgae(val action: String, val to: String, val data: String,val form:String,val fileSize:Int)
+    data class socketMessgae(val action: String, val to: String?, val data: String?,val form:String?,val fileSize:String?)
 
     private val outputStream = ByteArrayOutputStream() // Store image data
+    var receivingFileSize = 0
 
     override fun onOpen(handshakedata: ServerHandshake?) {
         Log.d("WebSocket", "Connected to server")
@@ -27,6 +28,10 @@ class MyWebSocketClient(serverUri: URI, private val onImageReceived: (Bitmap?) -
         Log.d("WebSocket", "Received message: ${m.action}")
         when (m.action){
            "send_image"->{sendImage()}
+            "receive_image"->{
+                updateProgressUI(0)
+                receivingFileSize = m.fileSize!!.toInt()
+            }
             else->{}
         }
     }
@@ -48,6 +53,12 @@ class MyWebSocketClient(serverUri: URI, private val onImageReceived: (Bitmap?) -
                 outputStream.reset() // Clear for next transfer
             } else {
                 outputStream.write(receivedData) // Append received data
+                val totalReceivedBytes = outputStream.size()
+                val progress = if (receivingFileSize > 0) {
+                    (totalReceivedBytes * 100L) / receivingFileSize
+                } else 0
+                Log.d("WebSocket", "Receiving progress: $progress%")
+                updateProgressUI(progress)
             }
         }
     }

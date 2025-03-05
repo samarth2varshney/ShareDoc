@@ -37,7 +37,9 @@ class MainActivity : AppCompatActivity() {
                         Log.e("WebSocket", "Failed to decode image")
                     }
                 }
-            },{sendImage(imageUri)})
+            },{sendImage(imageUri)},{
+                progress->updateProgressUI(progress)
+            })
             webSocketClient.connect()
         }
 
