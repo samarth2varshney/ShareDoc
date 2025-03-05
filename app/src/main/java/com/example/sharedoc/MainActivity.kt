@@ -1,48 +1,48 @@
 package com.example.sharedoc
 
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import java.io.ByteArrayOutputStream
+import com.example.sharedoc.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.net.URI
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webSocketClient: MyWebSocketClient
     private val IMAGE_PICK_CODE = 1000
+    private lateinit var imageUri: Uri
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        findViewById<Button>(R.id.connect).setOnClickListener {
+        binding.connect.setOnClickListener {
             val name = findViewById<EditText>(R.id.name).text.toString()
-            val serverUri = URI("ws://10.22.4.181:8080/ws?userId=$name")
-            webSocketClient = MyWebSocketClient(serverUri) { bitmap ->
+            val serverUri = URI("ws://10.22.2.38:8080/ws?userId=$name")
+            webSocketClient = MyWebSocketClient(serverUri,{ bitmap ->
                 runOnUiThread {
                     if (bitmap != null) {
-                        findViewById<ImageView>(R.id.imageView).setImageBitmap(bitmap) // Display the received image
+                        binding.imageView.setImageBitmap(bitmap) // Display the received image
                     } else {
                         Log.e("WebSocket", "Failed to decode image")
                     }
                 }
-            }
+            },{sendImage(imageUri)})
             webSocketClient.connect()
         }
 
 
-        findViewById<Button>(R.id.btnSelectImage).setOnClickListener {
+        binding.btnSelectImage.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK)
             intent.type = "image/*"
             startActivityForResult(intent, IMAGE_PICK_CODE)
@@ -54,27 +54,41 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == IMAGE_PICK_CODE && resultCode == RESULT_OK) {
             data?.data?.let { uri ->
+                val fileSize = contentResolver.openFileDescriptor(uri, "r")?.statSize ?: -1
                 webSocketClient.sendJson(mapOf(
                     "action" to "set_recipient",
                     "to" to "sagar",
-                    "data" to "hello bro"
+                    "data" to "hello bro",
+                    "fileSize" to fileSize,
                 ))
-                sendImage(uri)
+                imageUri = uri
             }
         }
     }
 
     fun sendImage(uri: Uri) {
+        Log.i("MainActivity","sendImage function called")
         val inputStream = contentResolver.openInputStream(uri)
         val buffer = ByteArray(8192) // Send 8KB chunks
+        val fileSize = contentResolver.openFileDescriptor(uri, "r")?.statSize ?: -1
+        var totalBytesSent = 0L
         var bytesRead: Int
 
         while (inputStream?.read(buffer).also { bytesRead = it ?: -1 } != -1) {
             webSocketClient.sendBinaryData(buffer.copyOf(bytesRead))
+            totalBytesSent += bytesRead
+            val progress = (totalBytesSent * 100) / fileSize
+            updateProgressUI(progress)
         }
 
         inputStream?.close()
         webSocketClient.sendBinaryData("END".toByteArray())
+    }
+
+    fun updateProgressUI(progress: Long) {
+        runOnUiThread {
+            binding.progressBar.progress = progress.toInt()
+        }
     }
 
     override fun onDestroy() {

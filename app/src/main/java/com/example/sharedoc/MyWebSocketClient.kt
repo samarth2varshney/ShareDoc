@@ -2,7 +2,9 @@ package com.example.sharedoc
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Log
+import com.google.gson.Gson
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import org.json.JSONObject
@@ -10,7 +12,9 @@ import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.nio.ByteBuffer
 
-class MyWebSocketClient(serverUri: URI, private val onImageReceived: (Bitmap?) -> Unit) : WebSocketClient(serverUri) {
+class MyWebSocketClient(serverUri: URI, private val onImageReceived: (Bitmap?) -> Unit,private val sendImage:()->Unit) : WebSocketClient(serverUri) {
+
+    data class socketMessgae(val action: String, val to: String, val data: String,val form:String,val fileSize:Int)
 
     private val outputStream = ByteArrayOutputStream() // Store image data
 
@@ -19,7 +23,12 @@ class MyWebSocketClient(serverUri: URI, private val onImageReceived: (Bitmap?) -
     }
 
     override fun onMessage(message: String?) {
-        Log.d("WebSocket", "Received message: $message")
+        val m = Gson().fromJson(message, socketMessgae::class.java)
+        Log.d("WebSocket", "Received message: ${m.action}")
+        when (m.action){
+           "send_image"->{sendImage()}
+            else->{}
+        }
     }
 
     override fun onMessage(bytes: ByteBuffer?) {

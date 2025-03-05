@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-kapt")
 }
 
 android {
@@ -33,6 +34,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    buildFeatures{
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -46,6 +50,16 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    //airbnb recycler view
+    implementation (libs.epoxy)
+
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
 
+    implementation ("com.google.code.gson:gson:2.10.1")
+
+}
+
+// Allow references to generated code
+kapt {
+    correctErrorTypes = true
 }
