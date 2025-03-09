@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">ShareDoc</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="sign_up">Sign Up</string>
+
+    <string name="font_poppins_black">Poppins-Black.tff</string>
+    <string name="font_poppins_bold">Poppins-Bold.tff</string>
+    <string name="font_poppins_light">Poppins-Light.tff</string>
+    <string name="font_poppins_medium">Poppins-Medium.tff</string>
+    <string name="font_poppins_regular">Poppins-Regular.tff</string>
+    <string name="font_poppins_semibold">Poppins-SemiBold.tff</string>
+    <string name="title_activity_sign_up">SignUpActivity</string>
 </resources>

@@ -16,6 +16,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
@@ -36,6 +39,15 @@ android {
     }
     buildFeatures{
         viewBinding = true
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1"
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
 }
 
@@ -56,6 +68,10 @@ dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
 
     implementation ("com.google.code.gson:gson:2.10.1")
+
+    //Retrofit dependency
+    implementation (libs.retrofit)
+    implementation (libs.converter.gson)
 
 }
 
